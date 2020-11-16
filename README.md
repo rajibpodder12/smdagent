@@ -1,5 +1,6 @@
-## SMD Agent Installation : Unattended mode via Ansible
+### SMD Agent Installation : Unattended mode via Ansible
 
+```
 The Solution Manager Diagnostics (SMD) component of SAP Solution Manager provides all functionality to centrally analyze and monitor a complete system landscape. Data Services can be monitored by the SMD server if an SMD Agent is installed. The SMD Agent gathers information for the SMD which can then be used for root cause analysis. Information collected and sent to the SMD server includes back-end server configurations and the location of server log files.
 
 Data Services provides support for performance and availability monitoring through CA Wily Introscope in Solution Manager Diagnostics through an integration with the NCS library. The NCS library is installed automatically with Data Services.
@@ -14,3 +15,4 @@ CA Wily Introscope|An application performance management framework. Introscope E
 SAPOSCOL|The SAP Operating System Collector provides operating system data to the SMD and Introscope.
 
 All of these components are available for download from http://support.sap.com/swdc
+```
