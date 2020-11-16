@@ -1,0 +1,66 @@
+---
+  - name: checking the block device ,whether it is partitioned or not
+    shell: readlink -f /dev/disk/azure/scsi1/lun0
+    become: yes
+    register: orahome_device
+  - name: setting fact for blockdevice
+    set_fact:
+      blkdevice: "{{ orahome_device.stdout }}"
+  - name: partition the {{ blkdevice }} blockdevice
+    parted:
+      device: "{{ blkdevice }}"
+      number: "{{ item.number }}"
+      part_start: "{{ item.ssize }}GB"
+      part_end: "{{ item.esize }}GB"
+      unit: GB
+      state: present
+      align: optimal
+      label: gpt
+    become: yes
+    when: blkdevice is defined
+    with_items:
+      - "{{ mp_info }}" 
+  - name: formatting the partition
+    filesystem:
+      fstype: "{{ fstype }}"
+      device: "{{ blkdevice }}{{ item.number }}"
+      force: no
+    become: yes
+    tags: format_blkdevice
+    with_items:
+      - "{{ mp_info }}"
+  - name: directory creation
+    file:
+      path: "{{ item.mountpoint }}"
+      state: directory
+    become: yes
+    tags: directory_creation
+    with_items:
+      - "{{ mp_info }}"
+  - name: gather UUID of the partion related to {{ blkdevice }}
+    shell: "blkid -s UUID -o value {{ blkdevice }}{{ item.number }}"
+    register: partitions_uuid
+    become: yes
+    with_items:
+      - "{{ mp_info }}"
+  - name: mounting the file system
+    mount:
+      path: "{{ item.mountpoint }}"
+      src: UUID="{{ partitions_uuid.results[item.number|int - 1].stdout }}"
+      fstype: "{{ fstype }}"
+      state: mounted
+    become: yes
+    tags: mounting_filesystem
+    with_items:
+      - "{{ mp_info }}"
+  - name: ownership change for the mount point
+    file:
+      dest: "{{ item.mountpoint }}"
+      owner: "{{ item.owner|default(sidadm_user) }}"
+      group: "{{ sapsys_group }}"
+      mode: 0775
+    become: yes
+    ignore_errors: yes
+    tags: ownership_change_mountpoint
+    with_items:
+      - "{{ mp_info }}"

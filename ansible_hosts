@@ -1,0 +1,4 @@
+[appserver]
+nodevm-1 ansible_host=40.82.213.91
+nodevm-2 ansible_host=40.82.210.164
+

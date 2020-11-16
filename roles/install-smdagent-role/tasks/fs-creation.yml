@@ -1,0 +1,60 @@
+---
+  - name: checking the block device ,whether it is partitioned or not
+    shell: readlink -f /dev/disk/azure/scsi1/lun0
+    become: yes
+    register: sap_device
+  - name: setting fact for blockdevice
+    set_fact:
+      blkdevice: "{{ sap_device.stdout }}"
+  - name: create the {{ vg_name }} volume group
+    lvg:
+      pvs: "{{ blkdevice }}"
+      vg: "{{ vg_name }}"
+      force: no
+      state: present
+    become: yes
+  - name: create logical volume 
+    lvol:
+      vg: "{{ vg_name }}"
+      lv: "{{ item.lvname }}"
+      size: "{{ item.size }}G"
+      active: yes
+      force: no
+      state: present
+    become: yes
+    with_items:
+      - "{{ lv_info }}"
+  - name: create and format the filesytem on logical volume
+    filesystem:
+      fstype: "{{ fstype }}"
+      dev: "/dev/{{ vg_name }}/{{ item.lvname }}"
+      force: no
+    become: yes
+    with_items:
+      - "{{ lv_info }}"
+  - name: directory creation
+    file:
+      path: "{{ item.mountpoint }}"
+      state: directory
+    become: yes
+    with_items:
+      - "{{ lv_info }}"
+  - name: mounting the file system
+    mount:
+      path: "{{ item.mountpoint }}"
+      src: "/dev/{{ vg_name }}/{{ item.lvname }}"
+      fstype: "{{ fstype }}"
+      state: mounted
+    become: yes
+    with_items:
+      - "{{ lv_info }}"
+  - name: ownership change for the mount point
+    file:
+      dest: "{{ item.mountpoint }}"
+      owner: "{{ item.owner|default(sidadm_user) }}"
+      group: "{{ sapsys_group }}"
+      mode: 0775
+    become: yes
+    ignore_errors: yes
+    with_items:
+      - "{{ lv_info }}"

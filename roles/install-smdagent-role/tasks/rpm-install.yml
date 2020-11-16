@@ -1,0 +1,14 @@
+---
+  - name: install prerequisite rpms
+    yum:
+      name: "{{ packages }}"
+      state: present
+    become: yes
+    tags: db19c_preinstpkg
+    register: db19c_prerpm_install
+    vars:
+      packages:
+      - oracle-database-preinstall-19c
+      - tcsh
+      - uuidd
+      - ftp

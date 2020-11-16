@@ -1,0 +1,10 @@
+---
+# tasks file for install-smdagent
+- include: rpm-install.yml
+- include: group-creation.yml
+- include: user-creation.yml
+- include: timezone-setup.yml
+- include: kernel-parameter-settings.yml
+- include: user-limit.yml
+- include: fs-creation.yml
+- include: smdagent-install.yml

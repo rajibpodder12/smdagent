@@ -1,0 +1,7 @@
+---
+  - name: set timezone to Australia/Sydney
+    timezone:
+      name: Australia/Sydney
+    become: yes
+    tags: timezone_setup
+

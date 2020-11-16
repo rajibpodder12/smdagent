@@ -1,0 +1,44 @@
+---
+  - name: calculate the value of  90% of the RAM
+    debug:
+      msg: "{{ (ansible_memtotal_mb*1024*1024*0.9)|int|abs }}"
+    tags: memlimit
+    register: memlimit
+  - name: sap recommended user limits configurations
+    pam_limits:
+      domain: "{{ item.user }}"
+      limit_type: "{{ item.type }}"
+      limit_item: "{{ item.item }}"
+      value: "{{ item.value }}"
+      backup: yes
+    become: yes
+    tags: user_limit
+    with_items:
+      - { user: "{{ oracle_user }}",type: "soft", item: "nproc", value: "16384" }
+      - { user: "{{ oracle_user }}",type: "hard", item: "nproc", value: "16384" }
+      - { user: "{{ oracle_user }}",type: "soft", item: "nofile", value: "65536" }
+      - { user: "{{ oracle_user }}",type: "hard", item: "nofile", value: "65536" }
+      - { user: "{{ oracle_user }}",type: "soft", item: "stack", value: "10240" }
+      - { user: "{{ oracle_user }}",type: "hard", item: "stack", value: "32768" }
+      - { user: "{{ oracle_user }}",type: "soft", item: "memlock", value: "{{ memlimit.msg }}" }
+      - { user: "{{ oracle_user }}",type: "hard", item: "memlock", value: "{{ memlimit.msg }}" }
+      - { user: "{{ gridadmin_user }}",type: "soft", item: "nproc", value: "16384" }
+      - { user: "{{ gridadmin_user }}",type: "hard", item: "nproc", value: "16384" }
+      - { user: "{{ gridadmin_user }}",type: "soft", item: "nofile", value: "65536" }
+      - { user: "{{ gridadmin_user }}",type: "hard", item: "nofile", value: "65536" }
+      - { user: "{{ gridadmin_user }}",type: "soft", item: "stack", value: "10240" }
+      - { user: "{{ gridadmin_user }}",type: "hard", item: "stack", value: "32768" }
+      - { user: "{{ gridadmin_user }}",type: "soft", item: "memlock", value: "{{ memlimit.msg }}" }
+      - { user: "{{ gridadmin_user }}",type: "hard", item: "memlock", value: "{{ memlimit.msg }}" }
+  - name: configure the /etc/security/limits.d/99-sap.conf
+    lineinfile: 
+      dest: /etc/security/limits.d/99-sap.conf
+      create: yes
+      line: '@{{ item.user }} {{ item.type }} {{ item.item }} {{ item.value }}' 
+    tags: group_limit
+    become: yes
+    with_items:
+      - { user: "{{ sapsys_group }}",type: "soft", item: "nproc", value: "unlimited" }
+      - { user: "{{ sapsys_group }}",type: "hard", item: "nproc", value: "unlimited" }
+      - { user: "{{ sapsys_group }}",type: "soft", item: "nofile", value: "65536" }
+      - { user: "{{ sapsys_group }}",type: "hard", item: "nofile", value: "65536" }

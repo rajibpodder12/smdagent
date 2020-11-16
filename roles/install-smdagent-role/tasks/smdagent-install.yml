@@ -1,0 +1,60 @@
+---
+  - name: directory creation for the smdagent installation
+    file:
+      path: "{{ item }}"
+      state: directory
+      group: "{{ sapinst_group }}"
+      mode: '0775'
+      recurse: yes
+    become: yes
+    loop:
+    - "{{ installation_media_dir }}"
+    - "/usr/sap/{{ app_sid|upper }}/unattended/install"
+#  - name: copying SAPCAR and SWPM
+#    copy:
+#      src: "/basis/sl_tools/{{ item }}"
+#      dest: "{{ installation_media_dir }}/{{ item }}"
+#      remote_src: yes
+#      mode: '0775'
+#    become: yes
+#    when: old_install_file_count.stdout|int == 0
+#    loop:
+#    - "{{ SWPM }}"
+#    - "{{ SAPCAR }}"
+  - name: extracting SWPM
+    shell: "./{{ SAPCAR }} -xvf {{ SWPM }} -R {{ installation_media_dir }} && chmod 775 {{ installation_media_dir }}/sapinst"
+    args:
+      chdir: "/basis/sl_tools"
+    become: yes
+  - name: copying start_dir.cd and installation.properites file
+    template:
+      src: "{{ item }}"
+      dest: /usr/sap/{{ app_sid|upper }}/unattended/install/{{ item | basename | regex_replace('\.j2$', '') }}
+      group: "{{ sapinst_group }}"
+      mode: '0775'
+    become: yes
+    with_fileglob:
+      - ../templates/*.j2
+  - name: installing smdagent
+    shell: "{{ installation_media_dir }}/sapinst SAPINST_INPUT_PARAMETERS_URL=/usr/sap/{{ app_sid|upper }}/unattended/install/installation.properties SAPINST_EXECUTE_PRODUCT_ID=NW_DiagnosticsAgent:GENERIC.IND.PD SAPINST_SKIP_DIALOGS=true -nogui -noguiserver"
+    environment:
+       SAPINST_HTTPS_PORT: 3389
+    args:
+      chdir: /usr/sap/{{ app_sid|upper }}/unattended/install
+    become: yes
+  - name: taking 30 second sleep as smdagent sometimes take time to be in green status
+    pause:
+      seconds: 30
+  - name: verification of smdagent installation
+    shell: export LD_LIBRARY_PATH=/usr/sap/DAA/SMDA98/exe:${LD_LIBRARY_PATH} && /usr/sap/DAA/SMDA98/exe/sapcontrol -prot NI_HTTP -nr 98 -function GetProcessList
+    become: "{{ daaadm_user }}"
+    register: post_installation_status
+    failed_when: post_installation_status.stderr != ""
+  - name: start the smdsgent if post installation contains FAIL NIECONN_REFUSED (Connection refused), NiRawConnect failed in plugin_fopen()
+    shell: startsap SMDA98
+    become: "{{ daaadm_user }}"
+    when: post_installation_status is failed
+  - name: Post install smdagent status
+    debug:
+      msg: "{{ post_installation_status.stdout_lines }}"
+    when: post_installation_status is succeeded

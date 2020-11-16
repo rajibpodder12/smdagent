@@ -1,0 +1,17 @@
+---
+  - name: group creation
+    group:
+      name: "{{ item.groupname }}"
+      gid: "{{ item.groupid }}"
+      state: present
+    become: yes
+    with_items:
+      - { groupname: "{{ primary_group }}", groupid: 501 }
+      - { groupname: "{{ oracle_dba_group }}", groupid: 502 }
+      - { groupname: "{{ oracle_oper_group }}", groupid: 528 }
+      - { groupname: "{{ sapsys_group }}", groupid: 527 }
+      - { groupname: "{{ sapinst_group }}", groupid: 1004 }
+      - { groupname: "{{ asm_dba_group }}", groupid: 410 }
+      - { groupname: "{{ asm_oper_group }}", groupid: 411 }
+      - { groupname: "{{ asm_admin_group }}", groupid: 409 }
+

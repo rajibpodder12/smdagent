@@ -1,0 +1,43 @@
+---
+ansible_python_interpreter: /usr/bin/python3
+fstype: xfs
+fstab: /etc/fstab
+sapsys_group: sapsys
+sapinst_group: sapinst
+primary_group: oinstall
+oracle_dba_group: dba
+oracle_oper_group: oper
+asm_dba_group: asmdba
+asm_oper_group: asmoper
+asm_admin_group: asmadmin
+gridadmin_user: gridadmin
+orasid_user: "ora{{ app_sid }}"
+oracle_user: oracle
+sidadm_user: "{{ app_sid }}adm"
+sapadm_user: sapadm
+daaadm_user: daaadm
+soft_repo_loc: /basis
+kernel_media_dir: /basis/daa_agent
+installation_media_dir: "/usr/sap/{{ app_sid|upper }}/SWPM"
+#smdagent_base_mount: /usr/sap
+SWPM: SWPM10SP30_1-20009701.SAR
+SAPCAR: SAPCAR
+password: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+#mp_info:
+#  - { number: "1", size: "6", ssize: "0", esize: "6", mountpoint: "/usr/sap" }
+#  - { number: "2", size: "2", ssize: "6", esize: "8", mountpoint: "/usr/sap/hostctrl" }
+#  - { number: "3", size: "6", ssize: "8", esize: "14", mountpoint: "/usr/sap/DAA", owner: "{{ daaadm_user }}" }
+#  - { number: "4", size: "6", ssize: "14", esize: "20", mountpoint: "/oracle" }
+#  - { number: "5", size: "50", ssize: "20", esize: "70", mountpoint: "/usr/sap/{{ app_sid|upper }}" }
+#  - { number: "6", size: "40", ssize: "70", esize: "110", mountpoint: "/sapmnt/{{ app_sid|upper }}" }
+#  - { number: "7", size: "40", ssize: "110", esize: "150", mountpoint: "/usr/sap/trans" }
+vg_name: sap_vg
+lv_info:
+  - { number: 1, lvname: "usr_sap", size: "5", mountpoint: "/usr/sap" }
+  - { number: 2, lvname: "usr_sap_hostctlr", size: "1", mountpoint: "/usr/sap/hostctrl" }  
+  - { number: 3, lvname: "usr_sap_{{ app_sid }}_hdbclient", size: "3", mountpoint: "/usr/sap/{{ app_sid|upper }}/hdbclient" }
+  - { number: 4, lvname: "usr_sap_daa", size: "5", mountpoint: "/usr/sap/DAA", owner: "{{ daaadm_user }}" }
+  - { number: 5, lvname: "usr_sap_{{ app_sid }}", size: "45", mountpoint: "/usr/sap/{{ app_sid|upper }}" }
+  - { number: 6, lvname: "oracle", size: "5", mountpoint: "/oracle" }
+  - { number: 7, lvname: "sapmnt_{{ app_sid }}", size: "32", mountpoint: "/sapmnt/{{ app_sid|upper }}" }
+  - { number: 8, lvname: "usr_sap_trans", size: "32",  mountpoint: "/usr/sap/trans" }

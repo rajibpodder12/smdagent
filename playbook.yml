@@ -1,0 +1,10 @@
+---
+- hosts: appserver
+  tasks:
+  - name: detecting old installed files
+    shell: ls -1 /usr/sap/{{ app_sid|upper }}/unattended/install 2>/dev/null|egrep -v "(start_dir.cd|installation.properties|*log)"|wc -l
+    register: old_install_file_count
+  - name: smdagent installation role 
+    include_role:
+      name: install-smdagent-role
+    when: old_install_file_count.stdout|int == 0

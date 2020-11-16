@@ -1,0 +1,40 @@
+---
+  - name: random password generation containg digits and letters having length 12 for {{ daaadm_user }} user
+    shell: echo {{ password }}
+    register: epass
+  - name: password for {{ daaadm_user }}
+    debug:
+      msg: "{{ epass.stdout }}"
+  - name: hash password generation 
+    set_fact:
+      passwordhash: "{{ epass.stdout | password_hash('sha512','mysecretsalt') }}"
+  - name: user creation
+    user:
+      name: "{{ item.username }}"
+      password: "{{ item.password | default(omit) }}"
+      uid: "{{ item.uid | default(omit) }}"
+      group: "{{ item.pgroup | default(omit) }}"
+      groups: "{{ item.sgroups | default(omit) }}"
+      update_password: 'always'
+      shell: /usr/bin/csh
+      state: present
+    become: yes
+    with_items:
+      - { username: "{{ oracle_user }}", uid: 501, pgroup: "{{ primary_group }}", sgroups: "{{ oracle_dba_group }},{{ oracle_oper_group }},{{ asm_dba_group }},{{ asm_oper_group }},{{ asm_admin_group }}" }
+      - { username: "{{ orasid_user }}", uid: 538, pgroup: "{{ oracle_dba_group }}", sgroups: "{{ primary_group }},{{ oracle_oper_group }}" }
+      - { username: "{{ sidadm_user }}", uid: 537, pgroup: "{{ sapsys_group }}", sgroups: "{{ oracle_dba_group }},{{ oracle_oper_group }}" }
+      - { username: "{{ gridadmin_user }}", uid: 409, pgroup: "{{ primary_group }}", sgroups: "{{ asm_dba_group }},{{ asm_oper_group }},{{ asm_admin_group }}" }
+      - { username: "{{ daaadm_user }}", uid: 885, pgroup: "{{ sapsys_group }}", sgroups: "{{ sapinst_group }}", password: "{{ passwordhash }}" }
+      - { username: "{{ sapadm_user }}", uid: 959, pgroup: "{{ sapsys_group }}", sgroups: "{{ sapinst_group }}" }
+  - name: include {{ sapinst_group }} as secondary group of root user
+    user:
+      name: root
+      groups: "{{ sapinst_group }}"
+    become: yes
+  - name: include {{ daaadm_user }} to have sudo privileges
+    lineinfile:
+      dest: /etc/sudoers
+      state: present
+      line: '{{ daaadm_user }}  ALL=(ALL)  ALL'
+      validate: visudo -cf %s
+    become: yes

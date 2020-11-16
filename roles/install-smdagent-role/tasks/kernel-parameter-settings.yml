@@ -1,0 +1,48 @@
+---
+  - name: sap recommended kernel parameters settings
+    sysctl:
+      name: "{{ item.name }}"
+      value: "{{ item.value }}"
+      state: present
+      ignoreerrors: yes # Ignore errors about unknown keys
+      reload: yes
+    tags: kernel_parameters
+    become: yes
+    with_items:
+      - { name: "vm.max_map_count", value: "2147483647" }
+      - { name: "kernel.sem", value: "32000 1024000000 500 32000" }
+      - { name: "fs.file-max", value: "6815744" }
+      - { name: "fs.aio-max-nr", value: "1048576" }
+      - { name: "net.ipv4.ip_local_port_range", value: "9000 65500" }
+      - { name: "net.ipv4.conf.all.rp_filter", value: "2" }
+      - { name: "net.ipv4.conf.default.rp_filter", value: "2" }
+      - { name: "net.core.wmem_default", value: "262144" }
+      - { name: "net.core.wmem_max", value: "1048576" }
+  - name: configure the /etc/sysctl.d/98-sap.conf
+    lineinfile: 
+      dest: /etc/sysctl.d/98-sap.conf
+      create: yes
+      line: '{{ item.name }} = {{ item.value }}' 
+    tags: kernel_parameters
+    become: yes
+    with_items:
+      - { name: "vm.max_map_count", value: "2147483647" }
+      - { name: "kernel.sem", value: "32000 1024000000 500 32000" }
+      - { name: "fs.file-max", value: "6815744" }
+      - { name: "fs.aio-max-nr", value: "1048576" }
+      - { name: "net.ipv4.ip_local_port_range", value: "9000 65500" }
+      - { name: "net.ipv4.conf.all.rp_filter", value: "2" }
+      - { name: "net.ipv4.conf.default.rp_filter", value: "2" }
+      - { name: "net.core.wmem_default", value: "262144" }
+      - { name: "net.core.wmem_max", value: "1048576" }
+      - { name: "kernel.shmmni", value: "4096" }
+      - { name: "kernel.shmall", value: "1073741824" }
+      - { name: "kernel.shmmax", value: "4398046511104" }
+      - { name: "kernel.panic_on_oops", value: "1" }
+      - { name: "net.core.rmem_default", value: "262144" }
+      - { name: "net.core.rmem_max", value: "4194304" }
+  - name: Relaod sysctl configuration
+    shell: sysctl -p
+    become: yes
+    tags: kernel_parameters
+
